@@ -11,7 +11,8 @@ def getHTMLText(url, headers, params):
         r.encoding = r.apparent_encoding
         return r
     except BaseException as e:
-        return f'网页获取失败 {e}'
+        print(f'网页获取失败 {e}')
+        return ''
 
 
 # 解析页面，并执行文件操作
