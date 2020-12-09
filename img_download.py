@@ -100,7 +100,11 @@ def input_num():
 if __name__ == "__main__":
     filedir = r'wallhaven/'  # 文件保存目录
     headers = {'User-Agent': 'Mozilla/5.0'}  # 使用浏览器UA
-    base_url = 'https://wallhaven.cc/toplist'
+    base_url = r'https://wallhaven.cc/'
+     # latest,hot,toplist,random
+    section={1:'latest',2:'hot',3:'toplist',4:'random'}
+    # choices =input('选择栏目: [1] Latest; [2] HOT; [3] TOPLIST; [4] RANDOM')
+    real_url=base_url+section.get(3)
     # page = 1  # 爬取的页数，1
 
     # page = input_num()
@@ -114,7 +118,7 @@ if __name__ == "__main__":
     # 主逻辑
     for i in range(1, page + 1):  # 爬取1页，1-2
         params = {"page": i}
-        r = get_htmltext(base_url, headers, params)
+        r = get_htmltext(real_url, headers, params)
 
         # 开始解析页面
         parse_page(r, headers)
