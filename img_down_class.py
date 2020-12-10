@@ -7,7 +7,7 @@ import re
 import requests
 
 
-class Url_Data:
+class UrlData:
     def __init__(self):
         self.base_url = r'https://wallhaven.cc/'
         self.headers = {'User-Agent': 'Mozilla/5.0'}  # 使用浏览器UA
@@ -19,7 +19,7 @@ class Url_Data:
         return self.base_url + self.option[int(choice)]
 
 
-class Wallhaven_Parser:
+class WallhavenParser:
     def __init__(self, url_data, pic_down):
         self.real_url = url_data.get_real_url()
         self.headers = url_data.headers
@@ -34,24 +34,24 @@ class Wallhaven_Parser:
 
     def _parse_page(self, r):
         # re 解析html
-        wurl = r'https://wallhaven.cc/w/\w+? '
+        wurl = r'https://wallhaven.cc/w/\w+'
         src = re.findall(wurl, r.text)
-        fulurl = r'https://w.wallhaven.cc/full/[A-Za-z0-9]{2}/wallhaven-\w+?(.jpg|.png)'
+        fulurl = r'https://w.wallhaven.cc/full/[A-Za-z0-9]{2}/wallhaven-\w+(.jpg|.png)'
         count = 0
         if src:
             for each in src:
                 print(each)
-                r2 = requests.get(each, headers=self.headers, timeout=200)
+                r2 = requests.get(each, headers=self.headers, timeout=30)
                 imgsrc = re.search(fulurl, r2.text)
-                # print(imgsrc.group(0))
+                print(imgsrc.group(0))
                 filename = imgsrc.group(0)[-10:]
                 print(filename)
                 r = requests.get(imgsrc.group(0),
                                  headers=self.headers,
-                                 timeout=200)
+                                 timeout=30)
                 if r.status_code == 200:
                     self.pic_down.show_tip()
-                    self.pic_down.down_pic(r.content, filename)
+                    self.pic_down.down_img(r.content, filename)
                     count += 1
             print(f'共保存{count}张图片')
         else:
@@ -78,7 +78,7 @@ class Wallhaven_Parser:
             r = requests.get(self.real_url,
                              headers=self.headers,
                              params=params,
-                             timeout=200)
+                             timeout=30)
             r.raise_for_status()
             r.encoding = r.apparent_encoding
             return r
@@ -86,7 +86,7 @@ class Wallhaven_Parser:
             print(f'网页获取失败 {e}')
 
 
-class Pic_Downloader:
+class ImgDownloader:
     def __init__(self):
         self.filedir = r'wallhaven/'  # 文件保存目录
 
@@ -97,7 +97,7 @@ class Pic_Downloader:
             '-------------------------'
         print(tip)
 
-    def down_pic(self, content, filename):
+    def down_img(self, content, filename):
         filepath = self.filedir + filename
         try:
             if not os.path.exists(self.filedir):  # 如果文件保存目录不存在，新建
@@ -112,10 +112,10 @@ class Pic_Downloader:
 
 if __name__ == "__main__":
     # url基础数据
-    urldata = Url_Data()
+    url_data = UrlData()
     # 下载器，将来用协程改进
-    pic_downloader = Pic_Downloader()
+    img_downloader = ImgDownloader()
     # html解析器
-    wallhaven_parser = Wallhaven_Parser(urldata, pic_downloader)
+    wallhaven_parser = WallhavenParser(url_data, img_downloader)
     # 移动网络延迟高，连接不上
     wallhaven_parser.parse()
