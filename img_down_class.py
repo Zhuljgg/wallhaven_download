@@ -5,6 +5,15 @@ Toplist
 import os
 import re
 import requests
+import sys
+
+
+class NetTool():
+    @staticmethod
+    def ping(url):
+        #cmd调用ping命令
+        s = 'www.' + re.search(r'https://(.+)/', url).group(1)
+        os.system(f'ping {s}')
 
 
 class UrlData:
@@ -20,12 +29,18 @@ class UrlData:
 
 
 class WallhavenParser:
-    def __init__(self, url_data, pic_down):
+    def __init__(self, url_data, pic_down, nettool):
+        self.base_url = url_data.base_url
         self.real_url = url_data.get_real_url()
         self.headers = url_data.headers
         self.pic_down = pic_down
+        self.net_tool = nettool
 
     def parse(self):
+        print('- PING -')
+        #ping 获取延迟
+        self.net_tool.ping(self.base_url)
+        print('- START -')
         num = self._input_num()
         for i in range(1, int(num) + 1):
             params = {'page': i}
@@ -41,11 +56,12 @@ class WallhavenParser:
         if src:
             for each in src:
                 print(each)
-                r2 = requests.get(each, headers=self.headers, timeout=30)
+                r2 = self._get_htmltext()
+                # r2 = requests.get(each, headers=self.headers, timeout=30)
                 imgsrc = re.search(fulurl, r2.text)
-                print(imgsrc.group(0))
+                # print(imgsrc.group(0))
                 filename = imgsrc.group(0)[-10:]
-                print(filename)
+                # print(filename)
                 r = requests.get(imgsrc.group(0),
                                  headers=self.headers,
                                  timeout=30)
@@ -73,7 +89,7 @@ class WallhavenParser:
             except BaseException as e:
                 print(f'异常 {e}')
 
-    def _get_htmltext(self, params):
+    def _get_htmltext(self, params=None):
         try:
             r = requests.get(self.real_url,
                              headers=self.headers,
@@ -116,6 +132,6 @@ if __name__ == "__main__":
     # 下载器，将来用协程改进
     img_downloader = ImgDownloader()
     # html解析器
-    wallhaven_parser = WallhavenParser(url_data, img_downloader)
+    wallhaven_parser = WallhavenParser(url_data, img_downloader, NetTool)
     # 移动网络延迟高，连接不上
     wallhaven_parser.parse()
