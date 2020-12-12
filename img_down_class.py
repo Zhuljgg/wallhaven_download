@@ -6,8 +6,10 @@ import os
 import re
 import requests
 import sys
+import threading
 
 
+# 工具类
 class NetTool():
     @staticmethod
     def ping(url):
@@ -16,6 +18,7 @@ class NetTool():
         os.system(f'ping {s}')
 
 
+# URL数据类
 class UrlData:
     def __init__(self):
         self.base_url = r'https://wallhaven.cc/'
@@ -28,6 +31,7 @@ class UrlData:
         return self.base_url + self.option[int(choice)]
 
 
+# 解析网页类
 class WallhavenParser:
     def __init__(self, url_data, pic_down, nettool):
         self.base_url = url_data.base_url
@@ -44,34 +48,80 @@ class WallhavenParser:
         num = self._input_num()
         for i in range(1, int(num) + 1):
             params = {'page': i}
-            r = self._get_htmltext(params)
+            r = self._get_htmltext(self.real_url, params)
             self._parse_page(r)
+
+    # div list,default n is 4
+    @staticmethod
+    def _div_list(l, n=4):
+        """将一个列表分割成n个列表"""
+        if n > 0:
+            lists = [[] for _ in range(n)]
+            i = 0
+            for elem in l:
+                lists[i].append(elem)
+                i = (i + 1) % n
+        return lists
+
+    def _get_img(self, *uls):
+        count = 0
+        for url in uls:
+            r = self._get_htmltext(url)
+            imgsrc = re.search(
+                r'https://w.wallhaven.cc/full/[A-Za-z0-9]{2}/wallhaven-\w+(.jpg|.png)',
+                r.text)
+            r = self._get_htmltext(imgsrc.group(0))
+            if r.status_code == 200:
+                self.pic_down.show_tip()
+                filename = imgsrc.group(0)[-10:]
+                self.pic_down.down_img(r.content, filename)
+                count += 1
+            else:
+                continue
+        print(f'共保存{count}张图片')
 
     def _parse_page(self, r):
         # re 解析html
         wurl = r'https://wallhaven.cc/w/\w+'
         src = re.findall(wurl, r.text)
-        fulurl = r'https://w.wallhaven.cc/full/[A-Za-z0-9]{2}/wallhaven-\w+(.jpg|.png)'
-        count = 0
         if src:
-            for each in src:
-                print(each)
-                r2 = self._get_htmltext()
-                # r2 = requests.get(each, headers=self.headers, timeout=30)
-                imgsrc = re.search(fulurl, r2.text)
-                # print(imgsrc.group(0))
-                filename = imgsrc.group(0)[-10:]
-                # print(filename)
-                r = requests.get(imgsrc.group(0),
-                                 headers=self.headers,
-                                 timeout=30)
-                if r.status_code == 200:
-                    self.pic_down.show_tip()
-                    self.pic_down.down_img(r.content, filename)
-                    count += 1
-            print(f'共保存{count}张图片')
+            # 切割src
+            src_lists = WallhavenParser._div_list(src)
+            t1 = threading.Thread(target=self._get_img, args=(src_lists[0]))
+            t2 = threading.Thread(target=self._get_img, args=(src_lists[1]))
+            t3 = threading.Thread(target=self._get_img, args=(src_lists[2]))
+            t4 = threading.Thread(target=self._get_img, args=(src_lists[3]))
+            t1.start()
+            t2.start()
+            t3.start()
+            t4.start()
         else:
             print('list is none')
+
+        # if src:
+        #     fulurl = r'https://w.wallhaven.cc/full/[A-Za-z0-9]{2}/wallhaven-\w+(.jpg|.png)'
+        #     count = 0
+        #     for each in src:
+        #         print(each)
+        #         r2 = self._get_htmltext(each)
+        #         # r2 = requests.get(each, headers=self.headers, timeout=30)
+        #         imgsrc = re.search(fulurl, r2.text)
+        #         # print(imgsrc.group(0))
+        #         # print(filename)
+        #         r = self._get_htmltext(imgsrc.group(0))
+        #         # r = requests.get(imgsrc.group(0),
+        #         #                  headers=self.headers,
+        #         #                  timeout=30)
+        #         if r.status_code == 200:
+        #             self.pic_down.show_tip()
+        #             filename = imgsrc.group(0)[-10:]
+        #             self.pic_down.down_img(r.content, filename)
+        #             count += 1
+        #             if count == 2:
+        #                 break
+        #     print(f'共保存{count}张图片')
+        # else:
+        #     print('list is none')
 
     def _input_num(self):
         while True:
@@ -89,9 +139,9 @@ class WallhavenParser:
             except BaseException as e:
                 print(f'异常 {e}')
 
-    def _get_htmltext(self, params=None):
+    def _get_htmltext(self, url, params=None):
         try:
-            r = requests.get(self.real_url,
+            r = requests.get(url,
                              headers=self.headers,
                              params=params,
                              timeout=30)
@@ -102,6 +152,7 @@ class WallhavenParser:
             print(f'网页获取失败 {e}')
 
 
+# 图片下载类
 class ImgDownloader:
     def __init__(self):
         self.filedir = r'wallhaven/'  # 文件保存目录
