@@ -63,9 +63,11 @@ class WallhavenParser:
                 i = (i + 1) % n
         return lists
 
-    # 线程函数
-    def _get_img(self, *uls):
+    def _get_img(self):
+        l = []
         count = 0
+        uls = yield l
+        # print(uls)
         for url in uls:
             r = self._get_htmltext(url)
             imgsrc = re.search(
@@ -73,7 +75,6 @@ class WallhavenParser:
                 r.text)
             r = self._get_htmltext(imgsrc.group(0))
             if r.status_code == 200:
-                self.pic_down.show_tip()
                 filename = imgsrc.group(0)[-10:]
                 self.pic_down.down_img(r.content, filename)
                 count += 1
@@ -88,14 +89,20 @@ class WallhavenParser:
         if src:
             # 切割src
             src_lists = WallhavenParser._div_list(src)
-            t1 = threading.Thread(target=self._get_img, args=(src_lists[0]))
-            t2 = threading.Thread(target=self._get_img, args=(src_lists[1]))
-            t3 = threading.Thread(target=self._get_img, args=(src_lists[2]))
-            t4 = threading.Thread(target=self._get_img, args=(src_lists[3]))
-            t1.start()
-            t2.start()
-            t3.start()
-            t4.start()
+            self.pic_down.show_tip()
+            g = self._get_img()
+            g.send(None)
+            for each in src_lists:
+                g.send(each)
+            g.close()
+            # t1 = threading.Thread(target=self._get_img, args=(src_lists[0]))
+            # t2 = threading.Thread(target=self._get_img, args=(src_lists[1]))
+            # t3 = threading.Thread(target=self._get_img, args=(src_lists[2]))
+            # t4 = threading.Thread(target=self._get_img, args=(src_lists[3]))
+            # t1.start()
+            # t2.start()
+            # t3.start()
+            # t4.start()
         else:
             print('list is none')
 
