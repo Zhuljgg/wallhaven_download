@@ -63,6 +63,7 @@ class WallhavenParser:
                 i = (i + 1) % n
         return lists
 
+    # 线程函数
     def _get_img(self, *uls):
         count = 0
         for url in uls:
