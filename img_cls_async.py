@@ -22,7 +22,7 @@ class WallhavenSpider():
     def get_whole_url(self):
         # choice = input('选择栏目: [1] Latest; [2] HOT; [3] TOPLIST; [4] RANDOM\n')
         # 这里用4来测试
-        return self.base_url + self.option[4]
+        return self.base_url + self.option[3]
 
     def run(self):
         print('- START -')
@@ -32,18 +32,27 @@ class WallhavenSpider():
         end = time.time()
         print(f'共运行了{end-start}秒')
 
+    async def main(self, links):
+        # tasks
+        tasks = [(self._down_img(wlink))
+                 for wlink in links]
+        await asyncio.gather(*tasks)
+
     def _parse(self):
         # num = self.tool.get_input()
         for i in range(1, 1 + 1):
             params = {'page': i}
             links = self._get_w_links(params)
-            links = links[:3]
+            links = links[:1]
             print(links)
-            # tasks
-            loop = asyncio.get_event_loop()
-            tasks = [self._down_img(wlink) for wlink in links]
-            loop.run_until_complete(asyncio.wait(tasks))
-            loop.close()
+            # # tasks
+            # tasks = [(self._down_img(wlink))
+            #          for wlink in links]
+            asyncio.run(self.main(links))
+            # loop = asyncio.get_event_loop()
+            # loop.run_until_complete(asyncio.wait(tasks))
+            # loop.run_until_complete(asyncio.gather(tasks))
+            # loop.close()
 
     # 获取html的内容
     def _get_htmltext(self, url, params=None):
@@ -104,14 +113,14 @@ class WallhavenSpider():
 
 # 工具类
 class SpiderTool():
-    @staticmethod
+    @ staticmethod
     def ping(url):
         # cmd调用ping命令
         s = 'www.' + re.search(r'https://(.+)/', url).group(1)
         print('- PING -')
         os.system(f'ping {s}')
 
-    @staticmethod
+    @ staticmethod
     def get_input():
         while True:
             page = input('请输入想要爬取的网页页数：')
@@ -129,7 +138,7 @@ class SpiderTool():
                 print(f'异常 {e}')
 
     # div list,default n is 4
-    @staticmethod
+    @ staticmethod
     def div_list(l, n=4):
         """将一个列表分割成n个列表"""
         if n > 0:
@@ -140,12 +149,12 @@ class SpiderTool():
                 i = (i + 1) % n
         return lists
 
-    @staticmethod
+    @ staticmethod
     def show_tip(filedir):
         # 提示
         tip = f'开始爬取\n' \
             f'当前图片保存目录为 {filedir}\n'\
-            '-------------------------'
+            '------------------------------------'
         print(tip)
 
 
