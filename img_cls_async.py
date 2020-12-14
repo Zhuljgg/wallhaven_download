@@ -21,7 +21,7 @@ class WallhavenSpider():
 
     def get_whole_url(self):
         # choice = input('选择栏目: [1] Latest; [2] HOT; [3] TOPLIST; [4] RANDOM\n')
-        # 这里用4来测试
+        # 这里用3来测试
         return self.base_url + self.option[3]
 
     def run(self):
@@ -40,19 +40,20 @@ class WallhavenSpider():
 
     def _parse(self):
         # num = self.tool.get_input()
+        wlist = []
         for i in range(1, 1 + 1):
             params = {'page': i}
-            links = self._get_w_links(params)
-            links = links[:1]
-            print(links)
-            # # tasks
-            # tasks = [(self._down_img(wlink))
-            #          for wlink in links]
-            asyncio.run(self.main(links))
-            # loop = asyncio.get_event_loop()
-            # loop.run_until_complete(asyncio.wait(tasks))
-            # loop.run_until_complete(asyncio.gather(tasks))
-            # loop.close()
+            wlist.extend(self._get_w_links(params))
+        links = wlist[:3]
+        print(links)
+        # # tasks
+        # tasks = [(self._down_img(wlink))
+        #          for wlink in links]
+        asyncio.run(self.main(links))
+        # loop = asyncio.get_event_loop()
+        # loop.run_until_complete(asyncio.wait(tasks))
+        # loop.run_until_complete(asyncio.gather(tasks))
+        # loop.close()
 
     # 获取html的内容
     def _get_htmltext(self, url, params=None):

@@ -12,7 +12,7 @@ import asyncio
 class NetTool():
     @staticmethod
     def ping(url):
-        #cmd调用ping命令
+        # cmd调用ping命令
         s = 'www.' + re.search(r'https://(.+)/', url).group(1)
         os.system(f'ping {s}')
 
@@ -42,7 +42,7 @@ class WallhavenParser:
 
     def parse(self):
         print('- PING -')
-        #ping 获取延迟
+        # ping 获取延迟
         self.net_tool.ping(self.base_url)
         print('- START -')
         num = self._input_num()
